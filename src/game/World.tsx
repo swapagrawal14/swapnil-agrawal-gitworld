@@ -1,6 +1,6 @@
 import { useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { LAKE, WORLD, sites } from "@/game/layout";
 import { MODEL, FittedProp, Prop } from "@/game/models";
@@ -9,7 +9,26 @@ import { ArchiveField, Pavilion } from "@/game/monuments";
 const featuredSites = sites.filter((s) => s.featured);
 const archiveSites = sites.filter((s) => !s.featured);
 
-function Ground() {
+function ImmediateGround() {
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[WORLD * 2 + 8, WORLD * 2 + 8]} />
+        <meshStandardMaterial color="#87a85c" roughness={0.95} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
+        <circleGeometry args={[13.5, 40]} />
+        <meshStandardMaterial color="#e6dcc8" roughness={0.78} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+        <ringGeometry args={[12.2, 13.4, 40]} />
+        <meshStandardMaterial color="#cfc3a8" roughness={0.86} />
+      </mesh>
+    </group>
+  );
+}
+
+function GroundTextures() {
   const [grass, plaza, path] = useTexture([
     "/textures/grass.jpg",
     "/textures/plaza.jpg",
@@ -34,11 +53,11 @@ function Ground() {
         <planeGeometry args={[WORLD * 2 + 8, WORLD * 2 + 8]} />
         <meshStandardMaterial map={grass} roughness={0.92} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.021, 0]} receiveShadow>
         <circleGeometry args={[13.5, 40]} />
         <meshStandardMaterial map={plaza} roughness={0.7} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.031, 0]} receiveShadow>
         <ringGeometry args={[12.2, 13.4, 40]} />
         <meshStandardMaterial map={path} roughness={0.85} />
       </mesh>
@@ -60,16 +79,10 @@ function Water() {
   );
 }
 
-function Palace() {
+function PalaceModel() {
   return (
-    <group position={[LAKE.x, 0, LAKE.z]}>
-      <mesh position={[0, 0.1, 0]} receiveShadow>
-        <cylinderGeometry args={[5.4, 5.7, 0.22, 28]} />
-        <meshStandardMaterial color="#e8dfd0" roughness={0.72} />
-      </mesh>
-      <group position={[0, 0.2, 0]}>
-        <FittedProp url={MODEL.palace} size={8.4} castShadow />
-      </group>
+    <group position={[0, 0.2, 0]}>
+      <FittedProp url={MODEL.palace} size={8.4} castShadow />
     </group>
   );
 }
@@ -118,18 +131,49 @@ function Grove() {
   );
 }
 
-export function World() {
+export function Terrain() {
   return (
     <group>
-      <Ground />
+      <ImmediateGround />
+      <Suspense fallback={null}>
+        <GroundTextures />
+      </Suspense>
       <Water />
-      <Palace />
-      <Fountain />
+    </group>
+  );
+}
+
+export function Landmarks() {
+  return (
+    <group>
+      <group position={[LAKE.x, 0, LAKE.z]}>
+        <mesh position={[0, 0.1, 0]} receiveShadow>
+          <cylinderGeometry args={[5.4, 5.7, 0.22, 28]} />
+          <meshStandardMaterial color="#e8dfd0" roughness={0.72} />
+        </mesh>
+        <Suspense fallback={null}>
+          <PalaceModel />
+        </Suspense>
+      </group>
+      <Suspense fallback={null}>
+        <Fountain />
+      </Suspense>
       {featuredSites.map((s) => (
         <Pavilion key={s.slug} site={s} />
       ))}
       <ArchiveField sites={archiveSites} />
-      <Grove />
+      <Suspense fallback={null}>
+        <Grove />
+      </Suspense>
+    </group>
+  );
+}
+
+export function World() {
+  return (
+    <group>
+      <Terrain />
+      <Landmarks />
     </group>
   );
 }

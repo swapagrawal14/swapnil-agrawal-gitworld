@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { Car } from "@/game/Car";
 import { Dentist } from "@/game/Dentist";
 import { Pathogens } from "@/game/Pathogens";
-import { World } from "@/game/World";
+import { Landmarks, Terrain } from "@/game/World";
 import { Zombies } from "@/game/Zombies";
 import { attachControlsTest, bindInput, bindLook } from "@/game/input";
 import { useStudio } from "@/game/store";
@@ -107,10 +107,11 @@ export function StudioCanvas() {
         />
         <fog attach="fog" args={["#c5e4f5", 48, 96]} />
         <Lights />
+        <Terrain />
+        <Pathogens />
+        <Landmarks />
         <Suspense fallback={null}>
-          <World />
           <Car />
-          <Pathogens />
         </Suspense>
         <Suspense fallback={null}>
           <Dentist />
