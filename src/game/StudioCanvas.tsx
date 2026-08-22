@@ -1,6 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
-import { Component, Suspense, useEffect, type ReactNode } from "react";
+import { Component, Suspense, useEffect, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { CameraRig } from "@/game/CameraRig";
 import { Car } from "@/game/Car";
@@ -14,9 +14,9 @@ import { useStudio } from "@/game/store";
 function Lights() {
   return (
     <>
-      <hemisphereLight args={["#eaf4f8", "#b8a888", 0.85]} />
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[22, 32, 14]} intensity={1.25} castShadow={false} />
+      <hemisphereLight args={["#eaf4f8", "#b8a888", 1.0]} />
+      <ambientLight intensity={0.7} />
+      <directionalLight position={[22, 32, 14]} intensity={1.4} />
     </>
   );
 }
@@ -52,8 +52,38 @@ function ZombieLayer() {
   );
 }
 
+function Scene() {
+  return (
+    <>
+      <Sky
+        sunPosition={[60, 28, 40]}
+        turbidity={3.5}
+        rayleigh={0.55}
+        mieCoefficient={0.004}
+        mieDirectionalG={0.82}
+      />
+      <fog attach="fog" args={["#c5e4f5", 80, 150]} />
+      <Lights />
+      <CameraRig />
+      <Terrain />
+      <Pathogens />
+      <Landmarks />
+      <Suspense fallback={null}>
+        <Car />
+      </Suspense>
+      <Suspense fallback={null}>
+        <Dentist />
+      </Suspense>
+      <ZombieLayer />
+    </>
+  );
+}
+
 export function StudioCanvas() {
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
+    setReady(true);
     attachControlsTest();
     const unbindKeys = bindInput();
     const unbindLook = bindLook();
@@ -63,6 +93,11 @@ export function StudioCanvas() {
     };
   }, []);
 
+  // Avoid SSR WebGL — canvas only after client mount
+  if (!ready) {
+    return <div className="studio-canvas absolute inset-0 bg-bg" aria-hidden />;
+  }
+
   const mobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   return (
@@ -70,41 +105,25 @@ export function StudioCanvas() {
       <Canvas
         className="studio-canvas"
         shadows={false}
-        dpr={mobile ? [1, 1] : [1, 1.15]}
-        camera={{ position: [18, 12, 22], fov: 50, near: 0.1, far: 160 }}
+        dpr={mobile ? [1, 1] : [1, 1.2]}
+        camera={{ position: [16, 10, 20], fov: 50, near: 0.1, far: 200 }}
         gl={{
           antialias: !mobile,
           powerPreference: "high-performance",
           stencil: false,
           depth: true,
-          preserveDrawingBuffer: true,
+          alpha: false,
+          preserveDrawingBuffer: false,
           failIfMajorPerformanceCaveat: false,
         }}
-        onCreated={({ gl }) => {
+        onCreated={({ gl, scene }) => {
           gl.setClearColor("#c5e4f5", 1);
-          gl.toneMappingExposure = 1.05;
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.1;
+          scene.background = new THREE.Color("#c5e4f5");
         }}
       >
-        <Sky
-          sunPosition={[60, 28, 40]}
-          turbidity={3.5}
-          rayleigh={0.55}
-          mieCoefficient={0.004}
-          mieDirectionalG={0.82}
-        />
-        <fog attach="fog" args={["#c5e4f5", 70, 140]} />
-        <Lights />
-        <CameraRig />
-        <Terrain />
-        <Pathogens />
-        <Landmarks />
-        <Suspense fallback={null}>
-          <Car />
-        </Suspense>
-        <Suspense fallback={null}>
-          <Dentist />
-        </Suspense>
-        <ZombieLayer />
+        <Scene />
       </Canvas>
     </CanvasErrorBoundary>
   );
