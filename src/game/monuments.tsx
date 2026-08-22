@@ -14,7 +14,8 @@ function Mat({
   roughness?: number;
   metalness?: number;
 }) {
-  return <meshStandardMaterial color={color} roughness={roughness} metalness={metalness} />;
+  // meshBasic so pavilions never depend on lighting / tone-mapping
+  return <meshBasicMaterial color={color} />;
 }
 
 function Plinth({ r = 2.4, color = "#e8dfd0" }: { r?: number; color?: string }) {

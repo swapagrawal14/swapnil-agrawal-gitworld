@@ -112,4 +112,10 @@ export function FittedCar() {
 if (typeof window !== "undefined") {
   useGLTF.preload(MODEL.car);
   useGLTF.preload(MODEL.fountain);
+  useGLTF.preload(MODEL.palace);
+  useGLTF.preload(MODEL.dentist);
+  useGLTF.preload(MODEL.palm);
+  useGLTF.preload(MODEL.tree);
+  useGLTF.preload(MODEL.treeOak);
+  Object.values(SITE_GLB).forEach((url) => useGLTF.preload(url));
 }

@@ -1,5 +1,4 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Sky } from "@react-three/drei";
 import { Component, Suspense, useEffect, type ReactNode } from "react";
 import * as THREE from "three";
 import { Car } from "@/game/Car";
@@ -14,30 +13,15 @@ const camPos = new THREE.Vector3();
 const desired = new THREE.Vector3();
 
 function Lights() {
-  const mobile = typeof window !== "undefined" && window.innerWidth < 768;
-  const map = mobile ? 512 : 1024;
   return (
     <>
-      <hemisphereLight args={["#eaf4f8", "#b8a888", 0.75]} />
-      <ambientLight intensity={0.5} />
-      <directionalLight
-        position={[22, 32, 14]}
-        intensity={1.35}
-        castShadow={!mobile}
-        shadow-mapSize-width={map}
-        shadow-mapSize-height={map}
-        shadow-camera-far={55}
-        shadow-camera-left={-22}
-        shadow-camera-right={22}
-        shadow-camera-top={22}
-        shadow-camera-bottom={-22}
-        shadow-bias={-0.0003}
-      />
+      <ambientLight intensity={1.1} />
+      <hemisphereLight args={["#ffffff", "#8a9a6a", 0.9]} />
+      <directionalLight position={[20, 30, 12]} intensity={1.2} />
     </>
   );
 }
 
-/** Camera always runs — not blocked by car/dentist GLB Suspense */
 function StudioCamera() {
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.08);
@@ -48,18 +32,18 @@ function StudioCamera() {
     let tx = 0;
     let ty = 0;
     let tz = 0;
-    let dist = 24;
-    let lookY = 1.4;
-    let lag = 3.2;
+    let dist = 22;
+    let lookY = 1.3;
+    let lag = 3.5;
 
     if (!studio.playing) {
       if (!look.dragging) look.yaw += dt * 0.12;
       tx = 0;
       ty = 0;
       tz = 0;
-      dist = 24;
-      lookY = 1.4;
-      lag = 3.2;
+      dist = 22;
+      lookY = 1.3;
+      lag = 3.5;
     } else if (studio.inCar) {
       tx = sim.x;
       ty = sim.y;
@@ -76,12 +60,12 @@ function StudioCamera() {
       lag = 7;
     }
 
-    const pitch = THREE.MathUtils.clamp(look.pitch, 0.08, 1.15);
+    const pitch = THREE.MathUtils.clamp(look.pitch, 0.1, 1.15);
     const cp = Math.cos(pitch);
     const sp = Math.sin(pitch);
     desired.set(
       tx + Math.sin(look.yaw) * dist * cp,
-      ty + lookY + sp * dist * 0.9,
+      Math.max(ty + lookY + sp * dist * 0.85, 3),
       tz + Math.cos(look.yaw) * dist * cp,
     );
     if (![desired.x, desired.y, desired.z].every(Number.isFinite)) return;
@@ -89,7 +73,7 @@ function StudioCamera() {
     camPos.copy(state.camera.position).lerp(desired, k);
     if (![camPos.x, camPos.y, camPos.z].every(Number.isFinite)) return;
     state.camera.position.copy(camPos);
-    state.camera.lookAt(tx, ty + lookY * 0.4, tz);
+    state.camera.lookAt(tx, ty + 0.8, tz);
 
     const cam = state.camera as THREE.PerspectiveCamera;
     if (cam.isPerspectiveCamera) {
@@ -112,7 +96,7 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { err: stri
         <div className="absolute inset-0 z-20 grid place-items-center bg-bg px-6 text-center">
           <div>
             <p className="font-display text-3xl text-ink italic">Studio hit a snag</p>
-            <p className="mt-2 text-sm text-muted">Refresh the page to reload the grounds.</p>
+            <p className="mt-2 text-sm text-muted">{this.state.err}</p>
           </div>
         </div>
       );
@@ -148,36 +132,34 @@ export function StudioCanvas() {
     <CanvasErrorBoundary>
       <Canvas
         className="studio-canvas"
-        shadows={!mobile}
-        dpr={mobile ? [1, 1] : [1, 1.25]}
-        camera={{ position: [18, 12, 22], fov: 50, near: 0.1, far: 160 }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}
+        shadows={false}
+        dpr={mobile ? 1 : 1.25}
+        frameloop="always"
+        camera={{ position: [16, 10, 20], fov: 50, near: 0.1, far: 200 }}
         gl={{
           antialias: !mobile,
           powerPreference: "high-performance",
+          alpha: false,
           stencil: false,
           depth: true,
           preserveDrawingBuffer: true,
           failIfMajorPerformanceCaveat: false,
         }}
-        onCreated={({ gl }) => {
-          gl.setClearColor("#c5e4f5", 1);
-          gl.toneMappingExposure = 1.05;
-          if (gl.shadowMap) gl.shadowMap.type = THREE.PCFShadowMap;
+        onCreated={({ gl, scene }) => {
+          gl.setClearColor("#7eb8d4", 1);
+          gl.toneMapping = THREE.NoToneMapping;
+          scene.background = new THREE.Color("#7eb8d4");
         }}
       >
-        <Sky
-          sunPosition={[60, 28, 40]}
-          turbidity={3.5}
-          rayleigh={0.55}
-          mieCoefficient={0.004}
-          mieDirectionalG={0.82}
-        />
-        <fog attach="fog" args={["#c5e4f5", 55, 110]} />
+        <fog attach="fog" args={["#7eb8d4", 70, 140]} />
         <Lights />
         <StudioCamera />
+        {/* Instant: ground + microbes + all repo pavilions (procedural) */}
         <Terrain />
         <Pathogens />
         <Landmarks />
+        {/* Streamed models */}
         <Suspense fallback={null}>
           <Car />
         </Suspense>
