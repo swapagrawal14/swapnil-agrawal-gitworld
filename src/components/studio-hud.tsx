@@ -58,7 +58,7 @@ function Joystick() {
     <div
       ref={ref}
       data-ui
-      className="relative size-[7.5rem] touch-none rounded-full bg-paper/75 shadow-border sm:size-32 md:hidden"
+      className="relative size-[8.5rem] touch-none rounded-full bg-paper/90 shadow-border ring-2 ring-ink/10 md:hidden"
       aria-label="Move stick"
     >
       <div className="pointer-events-none absolute top-1/2 left-1/2 size-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink/20" />
@@ -105,7 +105,7 @@ function StartScreen() {
         </h1>
         <p className="mt-4 max-w-md text-sm leading-relaxed text-paper/80 sm:mt-5 sm:text-base">
           A sunlit studio you can walk or drive. {projects.length} public repositories on the
-          grounds — drag to look, walk or drive, and clear pathogens with the dental laser. Zombies join once you enter.
+          grounds — drag to look, walk or drive, and clear pathogens with the dental laser. Zombies join once you enter. On phone: tap Enter, then use the left stick and Laser. On phone: tap Enter, then use the left stick + Laser.
         </p>
         <div className="mt-6 flex flex-wrap gap-3 sm:mt-8">
           <button

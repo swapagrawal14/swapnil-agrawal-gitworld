@@ -82,6 +82,14 @@
   touch-action: none;
   width: 100% !important;
   height: 100% !important;
+  z-index: 0 !important;
+  opacity: 1 !important;
+  background: #6b9a3e;
+}
+.studio-canvas canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
