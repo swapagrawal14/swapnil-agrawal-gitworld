@@ -14,7 +14,6 @@ export const MODEL = {
   fountain: "/models/fountain.glb",
   palace: "/models/palace.glb",
   dentist: "/models/dentist.glb",
-  zombie: "/models/zombie.glb",
 } as const;
 
 /** Drop compressed HITEM exports here */
