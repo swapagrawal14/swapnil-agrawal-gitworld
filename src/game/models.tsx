@@ -109,6 +109,6 @@ export function FittedCar() {
 }
 
 if (typeof window !== "undefined") {
+  // Only preload the tiny car — dentist/palace stream after first paint
   useGLTF.preload(MODEL.car);
-  useGLTF.preload(MODEL.fountain);
 }

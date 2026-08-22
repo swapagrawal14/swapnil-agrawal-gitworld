@@ -89,3 +89,16 @@
     scroll-behavior: auto;
   }
 }
+
+.studio-canvas {
+  position: absolute !important;
+  inset: 0;
+  touch-action: none;
+  width: 100% !important;
+  height: 100% !important;
+}
+.studio-canvas canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}

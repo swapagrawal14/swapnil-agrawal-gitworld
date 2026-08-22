@@ -132,12 +132,18 @@ function Grove() {
 }
 
 export function Terrain() {
+  const mobile =
+    typeof window !== "undefined" &&
+    (window.innerWidth < 768 || /Mobi|Android|iPhone/i.test(navigator.userAgent));
   return (
     <group>
       <ImmediateGround />
-      <Suspense fallback={null}>
-        <GroundTextures />
-      </Suspense>
+      {/* Textured ground only on desktop — mobile stays on fast solid colors */}
+      {!mobile && (
+        <Suspense fallback={null}>
+          <GroundTextures />
+        </Suspense>
+      )}
       <Water />
     </group>
   );

@@ -1,6 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
-import { Component, Suspense, useEffect, type ReactNode } from "react";
+import { Component, Suspense, useEffect, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { Car } from "@/game/Car";
 import { Dentist } from "@/game/Dentist";
@@ -8,25 +8,20 @@ import { Pathogens } from "@/game/Pathogens";
 import { Landmarks, Terrain } from "@/game/World";
 import { attachControlsTest, bindInput, bindLook } from "@/game/input";
 
-function Lights() {
-  const mobile = typeof window !== "undefined" && window.innerWidth < 768;
-  const map = mobile ? 512 : 1024;
+function isMobile() {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+}
+
+function Lights({ mobile }: { mobile: boolean }) {
   return (
     <>
-      <hemisphereLight args={["#eaf4f8", "#b8a888", 0.7]} />
-      <ambientLight intensity={0.45} />
+      <hemisphereLight args={["#eaf4f8", "#b8a888", mobile ? 0.85 : 0.7]} />
+      <ambientLight intensity={mobile ? 0.55 : 0.45} />
       <directionalLight
         position={[22, 32, 14]}
-        intensity={1.4}
-        castShadow={!mobile}
-        shadow-mapSize-width={map}
-        shadow-mapSize-height={map}
-        shadow-camera-far={55}
-        shadow-camera-left={-22}
-        shadow-camera-right={22}
-        shadow-camera-top={22}
-        shadow-camera-bottom={-22}
-        shadow-bias={-0.0003}
+        intensity={mobile ? 1.15 : 1.4}
+        castShadow={false}
       />
     </>
   );
@@ -52,7 +47,25 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { err: stri
   }
 }
 
+/** Defer heavy skinned dentist until after first paint */
+function DeferredDentist({ mobile }: { mobile: boolean }) {
+  const [on, setOn] = useState(!mobile);
+  useEffect(() => {
+    if (!mobile) return;
+    const t = window.setTimeout(() => setOn(true), 400);
+    return () => window.clearTimeout(t);
+  }, [mobile]);
+  if (!on) return null;
+  return (
+    <Suspense fallback={null}>
+      <Dentist />
+    </Suspense>
+  );
+}
+
 export function StudioCanvas() {
+  const [mobile] = useState(() => isMobile());
+
   useEffect(() => {
     attachControlsTest();
     const unbindKeys = bindInput();
@@ -63,27 +76,27 @@ export function StudioCanvas() {
     };
   }, []);
 
-  const mobile = typeof window !== "undefined" && window.innerWidth < 768;
-
   return (
     <CanvasErrorBoundary>
       <Canvas
         className="studio-canvas"
-        shadows={!mobile}
-        dpr={mobile ? [1, 1] : [1, 1.25]}
-        camera={{ position: [18, 12, 22], fov: 50, near: 0.1, far: 160 }}
+        shadows={false}
+        dpr={mobile ? 1 : [1, 1.2]}
+        frameloop="always"
+        camera={{ position: [18, 12, 22], fov: 50, near: 0.1, far: mobile ? 90 : 140 }}
         gl={{
           antialias: !mobile,
-          powerPreference: "high-performance",
+          powerPreference: mobile ? "low-power" : "high-performance",
           stencil: false,
           depth: true,
-          preserveDrawingBuffer: true,
+          alpha: false,
+          preserveDrawingBuffer: false,
           failIfMajorPerformanceCaveat: false,
         }}
         onCreated={({ gl }) => {
           gl.setClearColor("#c5e4f5", 1);
           gl.toneMappingExposure = 1.05;
-          if (gl.shadowMap) gl.shadowMap.type = THREE.PCFShadowMap;
+          gl.setPixelRatio(mobile ? 1 : Math.min(window.devicePixelRatio, 1.5));
         }}
       >
         <Sky
@@ -93,17 +106,15 @@ export function StudioCanvas() {
           mieCoefficient={0.004}
           mieDirectionalG={0.82}
         />
-        <fog attach="fog" args={["#c5e4f5", 50, 100]} />
-        <Lights />
+        <fog attach="fog" args={["#c5e4f5", mobile ? 40 : 55, mobile ? 85 : 110]} />
+        <Lights mobile={mobile} />
         <Terrain />
         <Landmarks />
+        <Pathogens />
         <Suspense fallback={null}>
           <Car />
         </Suspense>
-        <Pathogens />
-        <Suspense fallback={null}>
-          <Dentist />
-        </Suspense>
+        <DeferredDentist mobile={mobile} />
       </Canvas>
     </CanvasErrorBoundary>
   );

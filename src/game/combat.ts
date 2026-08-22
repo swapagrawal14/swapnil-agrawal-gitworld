@@ -109,8 +109,8 @@ export function seedZombies(n = 2) {
   }
 }
 
-seedGerms(8);
-seedZombies(2);
+seedGerms(5);
+// seedZombies disabled for performance
 
 const listeners = new Set<() => void>();
 let kills = 0;
@@ -132,8 +132,8 @@ function bumpKills() {
 export function resetKills() {
   kills = 0;
   listeners.forEach((cb) => cb());
-  seedGerms(8);
-  seedZombies(2);
+  seedGerms(5);
+  // seedZombies disabled for performance
   combat.stun = 0;
 }
 
