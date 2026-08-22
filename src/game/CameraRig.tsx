@@ -1,4 +1,5 @@
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useLayoutEffect } from "react";
 import * as THREE from "three";
 import { look, sim } from "@/game/input";
 import { useStudio } from "@/game/store";
@@ -6,36 +7,42 @@ import { useStudio } from "@/game/store";
 const camPos = new THREE.Vector3();
 const desired = new THREE.Vector3();
 
-/**
- * Always-mounted camera. Must NOT live inside a Suspense that waits on GLBs,
- * or the title screen stays on empty sky until models finish.
- */
+/** Fixed title camera + play orbit. Always mounted (never behind Suspense). */
 export function CameraRig() {
+  const { camera } = useThree();
+
+  // Snap to a known-good title view on first frame so we never start on empty sky
+  useLayoutEffect(() => {
+    camera.position.set(14, 9, 18);
+    camera.lookAt(0, 1, 0);
+    if ("updateProjectionMatrix" in camera) {
+      (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+    }
+  }, [camera]);
+
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.08);
     const studio = useStudio.getState();
     const playing = studio.playing;
 
-    if (!Number.isFinite(look.yaw) || !Number.isFinite(look.pitch)) {
-      look.yaw = sim.yaw;
-      look.pitch = 0.42;
-    }
+    if (!Number.isFinite(look.yaw)) look.yaw = Math.PI / 2;
+    if (!Number.isFinite(look.pitch)) look.pitch = 0.35;
 
-    let tx: number;
-    let ty: number;
-    let tz: number;
-    let dist: number;
-    let lookY: number;
-    let lag: number;
+    let tx = 0;
+    let ty = 0;
+    let tz = 0;
+    let dist = 22;
+    let lookY = 1.2;
+    let lag = 4;
 
     if (!playing) {
-      if (!look.dragging) look.yaw += dt * 0.12;
+      if (!look.dragging) look.yaw += dt * 0.1;
       tx = 0;
       ty = 0;
-      tz = 0;
-      dist = 26;
-      lookY = 1.5;
-      lag = 3.2;
+      tz = 2;
+      dist = 22;
+      lookY = 1.2;
+      lag = 3;
     } else if (studio.inCar) {
       tx = sim.x;
       ty = sim.y;
@@ -52,24 +59,22 @@ export function CameraRig() {
       lag = 7;
     }
 
-    const cp = Math.cos(look.pitch);
-    const sp = Math.sin(look.pitch);
+    const pitch = THREE.MathUtils.clamp(look.pitch, 0.08, 1.2);
+    const cp = Math.cos(pitch);
+    const sp = Math.sin(pitch);
     desired.set(
       tx + Math.sin(look.yaw) * dist * cp,
-      ty + lookY + sp * dist * 0.9,
+      Math.max(ty + lookY + sp * dist * 0.85, 2),
       tz + Math.cos(look.yaw) * dist * cp,
     );
 
+    if (![desired.x, desired.y, desired.z].every(Number.isFinite)) return;
+
     const k = 1 - Math.exp(-lag * dt);
     camPos.copy(state.camera.position).lerp(desired, k);
-    if (!Number.isFinite(camPos.x) || !Number.isFinite(camPos.y) || !Number.isFinite(camPos.z)) {
-      return;
-    }
+    if (![camPos.x, camPos.y, camPos.z].every(Number.isFinite)) return;
     state.camera.position.copy(camPos);
-
-    if (Number.isFinite(tx) && Number.isFinite(ty) && Number.isFinite(tz)) {
-      state.camera.lookAt(tx, ty + lookY * 0.35, tz);
-    }
+    state.camera.lookAt(tx, ty + 1.0, tz);
 
     const cam = state.camera as THREE.PerspectiveCamera;
     if (cam.isPerspectiveCamera) {
