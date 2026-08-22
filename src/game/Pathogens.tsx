@@ -41,7 +41,7 @@ export function Pathogens() {
           ) : (
             <sphereGeometry args={[0.38, 10, 8]} />
           )}
-          <meshBasicMaterial color={COLORS[g.kind]} />
+          <meshStandardMaterial color={COLORS[g.kind]} roughness={0.55} />
         </mesh>
       ))}
     </group>

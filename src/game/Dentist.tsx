@@ -99,15 +99,19 @@ export function Dentist() {
   const current = useRef<string>("idle");
   const group = useRef<THREE.Group>(null);
 
+  const handRef = useRef<THREE.Object3D | null>(null);
   useEffect(() => {
     const hand = findRightHand(scene);
+    handRef.current = hand;
     if (!hand) return;
+    // Parent without tiny scale — Mixamo bones already carry scale; grip sits in palm
     hand.add(handpiece);
-    handpiece.scale.setScalar(0.01);
-    handpiece.position.set(0.00012, 0.0009, 0.00032);
-    handpiece.rotation.set(0, 0, 0);
+    handpiece.scale.setScalar(1);
+    handpiece.position.set(0, 0.08, 0.04);
+    handpiece.rotation.set(-Math.PI / 2, 0, 0);
     return () => {
       hand.remove(handpiece);
+      handRef.current = null;
     };
   }, [scene, handpiece]);
 

@@ -12,17 +12,17 @@ const archiveSites = sites.filter((s) => !s.featured);
 function ImmediateGround() {
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[WORLD * 2 + 8, WORLD * 2 + 8]} />
-        <meshBasicMaterial color="#6b9a3e" />
+        <meshStandardMaterial color="#87a85c" roughness={0.95} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
         <circleGeometry args={[13.5, 40]} />
-        <meshBasicMaterial color="#e2d4b8" />
+        <meshStandardMaterial color="#e6dcc8" roughness={0.78} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
         <ringGeometry args={[12.2, 13.4, 40]} />
-        <meshBasicMaterial color="#c8b896" />
+        <meshStandardMaterial color="#cfc3a8" roughness={0.86} />
       </mesh>
     </group>
   );

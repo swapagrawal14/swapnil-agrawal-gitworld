@@ -18,6 +18,9 @@ import {
 import { FittedCar } from "@/game/models";
 import { useStudio } from "@/game/store";
 
+const camPos = new THREE.Vector3();
+const desired = new THREE.Vector3();
+
 function updateNear(x: number, z: number) {
   let best = 9;
   let slug: string | null = null;
@@ -33,11 +36,41 @@ function updateNear(x: number, z: number) {
   return slug;
 }
 
+function orbitCam(
+  state: { camera: THREE.Camera },
+  dt: number,
+  tx: number,
+  ty: number,
+  tz: number,
+  dist: number,
+  lookY: number,
+  lag: number,
+) {
+  if (!Number.isFinite(look.yaw) || !Number.isFinite(look.pitch)) {
+    look.yaw = sim.yaw;
+    look.pitch = 0.42;
+  }
+  const cp = Math.cos(look.pitch);
+  const sp = Math.sin(look.pitch);
+  desired.set(
+    tx + Math.sin(look.yaw) * dist * cp,
+    ty + lookY + sp * dist * 0.9,
+    tz + Math.cos(look.yaw) * dist * cp,
+  );
+  const k = 1 - Math.exp(-lag * dt);
+  camPos.copy(state.camera.position).lerp(desired, k);
+  if (!Number.isFinite(camPos.x) || !Number.isFinite(camPos.y) || !Number.isFinite(camPos.z)) return;
+  state.camera.position.copy(camPos);
+  if (Number.isFinite(tx) && Number.isFinite(ty) && Number.isFinite(tz)) {
+    state.camera.lookAt(tx, ty + lookY, tz);
+  }
+}
+
 export function Car() {
   const group = useRef<THREE.Group>(null);
   const grounded = useRef(true);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const dt = Math.min(delta, 0.08);
     const studio = useStudio.getState();
     const playing = studio.playing;
@@ -45,8 +78,10 @@ export function Car() {
     if (!g) return;
 
     if (!playing) {
+      if (!look.dragging) look.yaw += dt * 0.12;
       g.position.set(parked.x, parked.y, parked.z);
       g.rotation.y = parked.yaw + Math.PI;
+      orbitCam(state, dt, 0, 0, 0, 26, 1.5, 3.2);
       return;
     }
 
@@ -123,8 +158,16 @@ export function Car() {
       g.rotation.y = sim.yaw + Math.PI;
       g.rotation.z = THREE.MathUtils.damp(g.rotation.z, -steer * 0.12, 8, dt);
 
-      studio.setNearCar(false);
+      orbitCam(state, dt, sim.x, sim.y, sim.z, 11, 1.15, 5);
+      const cam = state.camera as THREE.PerspectiveCamera;
+      if (cam.isPerspectiveCamera) {
+        cam.fov = THREE.MathUtils.damp(cam.fov, 48 + Math.abs(sim.speed) * 0.35, 4, dt);
+        cam.updateProjectionMatrix();
+      }
+
       const slug = updateNear(sim.x, sim.z);
+      studio.setNearCar(false);
+
       if (consumeEnterExit() && Math.abs(sim.speed) < 3) studio.exitCar();
       if (keys.has("Enter") && slug) {
         keys.delete("Enter");
@@ -157,6 +200,13 @@ export function Car() {
       g.position.set(parked.x, parked.y, parked.z);
       g.rotation.y = parked.yaw + Math.PI;
       g.rotation.z = THREE.MathUtils.damp(g.rotation.z, 0, 8, dt);
+
+      orbitCam(state, dt, sim.x, sim.y, sim.z, 5.6, 1.32, 7);
+      const cam = state.camera as THREE.PerspectiveCamera;
+      if (cam.isPerspectiveCamera) {
+        cam.fov = THREE.MathUtils.damp(cam.fov, 50, 4, dt);
+        cam.updateProjectionMatrix();
+      }
 
       const distCar = Math.hypot(sim.x - parked.x, sim.z - parked.z);
       studio.setNearCar(distCar < 4.2);
