@@ -33,7 +33,6 @@ function updateNear(x: number, z: number) {
   return slug;
 }
 
-/** Car mesh + drive / walk sim. Camera is handled by CameraRig (always mounted). */
 export function Car() {
   const group = useRef<THREE.Group>(null);
   const grounded = useRef(true);
@@ -124,9 +123,8 @@ export function Car() {
       g.rotation.y = sim.yaw + Math.PI;
       g.rotation.z = THREE.MathUtils.damp(g.rotation.z, -steer * 0.12, 8, dt);
 
-      const slug = updateNear(sim.x, sim.z);
       studio.setNearCar(false);
-
+      const slug = updateNear(sim.x, sim.z);
       if (consumeEnterExit() && Math.abs(sim.speed) < 3) studio.exitCar();
       if (keys.has("Enter") && slug) {
         keys.delete("Enter");
@@ -178,7 +176,7 @@ export function Car() {
   });
 
   return (
-    <group ref={group} castShadow={false}>
+    <group ref={group} castShadow>
       <FittedCar />
     </group>
   );

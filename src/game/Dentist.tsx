@@ -79,7 +79,7 @@ export function Dentist() {
     scene.traverse((o) => {
       const m = o as THREE.SkinnedMesh;
       if (!m.isMesh) return;
-      m.castShadow = false;
+      m.castShadow = true;
       m.receiveShadow = false;
       m.frustumCulled = false;
       const mats = Array.isArray(m.material) ? m.material : [m.material];
@@ -93,17 +93,6 @@ export function Dentist() {
         std.needsUpdate = true;
       }
     });
-    // Fit Mixamo-scale character to ~1.78m so they are visible on the plaza
-    scene.updateMatrixWorld(true);
-    const box = new THREE.Box3().setFromObject(scene);
-    const h = Math.max(box.max.y - box.min.y, 0.01);
-    const s = 1.78 / h;
-    if (Number.isFinite(s) && s > 0.001 && s < 500) {
-      scene.scale.setScalar(s);
-      scene.updateMatrixWorld(true);
-      const fitted = new THREE.Box3().setFromObject(scene);
-      scene.position.y = -fitted.min.y;
-    }
   }, [scene, animations]);
 
   const { actions } = useAnimations(animations, scene);

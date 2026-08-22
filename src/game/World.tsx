@@ -14,11 +14,11 @@ function ImmediateGround() {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[WORLD * 2 + 8, WORLD * 2 + 8]} />
-        <meshStandardMaterial color="#6f9a45" roughness={0.95} />
+        <meshStandardMaterial color="#87a85c" roughness={0.95} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
         <circleGeometry args={[13.5, 40]} />
-        <meshStandardMaterial color="#d9c9a8" roughness={0.78} />
+        <meshStandardMaterial color="#e6dcc8" roughness={0.78} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
         <ringGeometry args={[12.2, 13.4, 40]} />
